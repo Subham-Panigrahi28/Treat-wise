@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
-import { getHospitalById, getProcedureById, getReviewsForHospital, addReview, hospitals as allHospitals } from "@/lib/data";
-import { Star, MapPin, Clock, DollarSign, UserCheck, ArrowLeft, MessageSquare, Send } from "lucide-react";
+import { getHospitalById, getProcedureById, getReviewsForHospital, addReview, hospitals as allHospitals, getUserActivity, toggleSavedHospital } from "@/lib/data";
+import { Star, MapPin, Clock, DollarSign, UserCheck, ArrowLeft, MessageSquare, Send, Bookmark } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,21 @@ const HospitalDetail = () => {
   const [reviews, setReviews] = useState(() =>
     hospital ? getReviewsForHospital(hospital.hospitalName, procedureId || undefined) : []
   );
+
+  const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    if (user && hospitalId) {
+      const activity = getUserActivity(user.id);
+      setIsSaved(activity.savedHospitals.includes(hospitalId));
+    }
+  }, [user, hospitalId]);
+
+  const handleToggleSave = () => {
+    if (!user || !hospitalId) return;
+    const nowSaved = toggleSavedHospital(user.id, hospitalId);
+    setIsSaved(nowSaved);
+  };
 
   if (!hospital) {
     return (
@@ -71,6 +86,17 @@ const HospitalDetail = () => {
               <span className="flex items-center gap-1"><Star className="h-4 w-4 fill-accent text-accent" />{hospital.patientRating} ({hospital.verifiedReviewsCount} verified reviews)</span>
               <span className="flex items-center gap-1"><UserCheck className="h-4 w-4" />{hospital.doctorExperienceYears} years doctor experience</span>
             </div>
+            {user && (
+              <Button
+                variant={isSaved ? "secondary" : "outline"}
+                size="sm"
+                className="mt-3 gap-1.5 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/20"
+                onClick={handleToggleSave}
+              >
+                <Bookmark className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
+                {isSaved ? "Saved" : "Save Hospital"}
+              </Button>
+            )}
           </div>
         </div>
       </div>

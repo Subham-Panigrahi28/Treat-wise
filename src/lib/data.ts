@@ -144,6 +144,7 @@ export function getReviewsForHospital(hospitalName: string, procedureId?: string
 const USERS_KEY = "treatwise_users";
 const CURRENT_USER_KEY = "treatwise_current_user";
 const REVIEWS_KEY = "treatwise_reviews";
+const ACTIVITY_KEY = "treatwise_activity";
 
 function simpleHash(str: string): string {
   let hash = 0;
@@ -238,4 +239,62 @@ export function addReview(review: Omit<Review, "id" | "createdAt">): Review {
   reviews.push(newReview);
   localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
   return newReview;
+}
+
+// ==================== USER ACTIVITY TRACKING ====================
+
+export interface ViewedProcedure {
+  procedureId: string;
+  viewedAt: string;
+}
+
+export interface UserActivity {
+  viewedProcedures: ViewedProcedure[];
+  savedHospitals: string[]; // hospital ids
+}
+
+function getActivityKey(userId: string): string {
+  return `${ACTIVITY_KEY}_${userId}`;
+}
+
+export function getUserActivity(userId: string): UserActivity {
+  try {
+    const data = localStorage.getItem(getActivityKey(userId));
+    return data ? JSON.parse(data) : { viewedProcedures: [], savedHospitals: [] };
+  } catch {
+    return { viewedProcedures: [], savedHospitals: [] };
+  }
+}
+
+function saveUserActivity(userId: string, activity: UserActivity) {
+  localStorage.setItem(getActivityKey(userId), JSON.stringify(activity));
+}
+
+export function trackProcedureView(userId: string, procedureId: string) {
+  const activity = getUserActivity(userId);
+  // Remove previous entry for same procedure so it moves to top
+  activity.viewedProcedures = activity.viewedProcedures.filter(
+    (v) => v.procedureId !== procedureId
+  );
+  activity.viewedProcedures.unshift({
+    procedureId,
+    viewedAt: new Date().toISOString(),
+  });
+  // Keep only the last 20
+  activity.viewedProcedures = activity.viewedProcedures.slice(0, 20);
+  saveUserActivity(userId, activity);
+}
+
+export function toggleSavedHospital(userId: string, hospitalId: string): boolean {
+  const activity = getUserActivity(userId);
+  const idx = activity.savedHospitals.indexOf(hospitalId);
+  if (idx > -1) {
+    activity.savedHospitals.splice(idx, 1);
+    saveUserActivity(userId, activity);
+    return false; // removed
+  } else {
+    activity.savedHospitals.push(hospitalId);
+    saveUserActivity(userId, activity);
+    return true; // added
+  }
 }

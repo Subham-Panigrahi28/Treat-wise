@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Heart, ArrowLeft, LogIn, LogOut, User } from "lucide-react";
+import { Heart, ArrowLeft, LogIn, LogOut, User, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -32,6 +32,12 @@ const Header = () => {
           </p>
           {user ? (
             <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/dashboard">
+                  <LayoutDashboard className="h-4 w-4 mr-1.5" />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </Link>
+              </Button>
               <span className="hidden sm:inline text-sm text-foreground font-medium">
                 <User className="inline h-4 w-4 mr-1" />
                 {user.name}

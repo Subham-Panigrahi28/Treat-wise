@@ -1,15 +1,24 @@
 import { useParams } from "react-router-dom";
+import { useEffect } from "react";
 import Header from "@/components/Header";
 import HospitalCard from "@/components/HospitalCard";
 import CostInsights from "@/components/CostInsights";
 import DecisionAssistant from "@/components/DecisionAssistant";
-import { getProcedureById, getHospitalsForProcedure } from "@/lib/data";
+import { getProcedureById, getHospitalsForProcedure, trackProcedureView } from "@/lib/data";
+import { useAuth } from "@/contexts/AuthContext";
 import { AlertCircle, Building2 } from "lucide-react";
 
 const CompareHospitals = () => {
   const { procedureId } = useParams<{ procedureId: string }>();
+  const { user } = useAuth();
   const procedure = getProcedureById(procedureId || "");
   const hospitals = getHospitalsForProcedure(procedureId || "");
+
+  useEffect(() => {
+    if (user && procedureId) {
+      trackProcedureView(user.id, procedureId);
+    }
+  }, [user, procedureId]);
 
   if (!procedure) {
     return (

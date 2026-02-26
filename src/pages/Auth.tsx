@@ -26,7 +26,7 @@ const Auth = () => {
     const result = isLogin ? login(email, password) : register(name, email, password);
 
     if (result.success) {
-      navigate("/");
+      navigate("/dashboard");
     } else {
       setError(result.error || "Something went wrong");
     }
